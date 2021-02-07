@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! DataFusion query execution
+//! Query execution.
 
 pub mod context;
 pub mod dataframe_impl;

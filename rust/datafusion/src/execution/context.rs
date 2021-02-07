@@ -16,8 +16,7 @@
 // under the License.
 
 //! ExecutionContext contains methods for registering data sources and executing queries
-use crate::optimizer::hash_build_probe_order::HashBuildProbeOrder;
-use log::debug;
+
 use std::fs;
 use std::path::Path;
 use std::string::String;
@@ -27,10 +26,12 @@ use std::{
     sync::Mutex,
 };
 
-use futures::{StreamExt, TryStreamExt};
-use tokio::task::{self, JoinHandle};
-
 use arrow::csv;
+use futures::{StreamExt, TryStreamExt};
+use log::debug;
+use parquet::arrow::ArrowWriter;
+use parquet::file::properties::WriterProperties;
+use tokio::task::{self, JoinHandle};
 
 use crate::datasource::csv::CsvFile;
 use crate::datasource::parquet::ParquetTable;
@@ -41,6 +42,7 @@ use crate::logical_plan::{
     FunctionRegistry, LogicalPlan, LogicalPlanBuilder, ToDFSchema,
 };
 use crate::optimizer::filter_push_down::FilterPushDown;
+use crate::optimizer::hash_build_probe_order::HashBuildProbeOrder;
 use crate::optimizer::optimizer::OptimizerRule;
 use crate::optimizer::projection_push_down::ProjectionPushDown;
 use crate::physical_plan::csv::CsvReadOptions;
@@ -54,8 +56,6 @@ use crate::sql::{
 };
 use crate::variable::{VarProvider, VarType};
 use crate::{dataframe::DataFrame, physical_plan::udaf::AggregateUDF};
-use parquet::arrow::ArrowWriter;
-use parquet::file::properties::WriterProperties;
 
 /// ExecutionContext is the main interface for executing queries with DataFusion. The context
 /// provides the following functionality:
@@ -67,7 +67,6 @@ use parquet::file::properties::WriterProperties;
 ///
 /// The following example demonstrates how to use the context to execute a query against a CSV
 /// data source using the DataFrame API:
-///
 /// ```
 /// use datafusion::prelude::*;
 /// # use datafusion::error::Result;
@@ -83,10 +82,8 @@ use parquet::file::properties::WriterProperties;
 /// ```
 ///
 /// The following example demonstrates how to execute the same query using SQL:
-///
 /// ```
 /// use datafusion::prelude::*;
-///
 /// # use datafusion::error::Result;
 /// # fn main() -> Result<()> {
 /// let mut ctx = ExecutionContext::new();
@@ -97,14 +94,20 @@ use parquet::file::properties::WriterProperties;
 /// ```
 #[derive(Clone)]
 pub struct ExecutionContext {
-    /// Internal state for the context
+    /// Internal state for the context.
     pub state: Arc<Mutex<ExecutionContextState>>,
+}
+
+impl Default for ExecutionContext {
+    fn default() -> Self {
+        Self::with_config(ExecutionConfig::default())
+    }
 }
 
 impl ExecutionContext {
     /// Creates a new execution context using a default configuration.
     pub fn new() -> Self {
-        Self::with_config(ExecutionConfig::new())
+        Self::default()
     }
 
     /// Creates a new execution context using the provided configuration.
@@ -120,7 +123,7 @@ impl ExecutionContext {
         }
     }
 
-    /// Creates a dataframe that will execute a SQL query.
+    /// Creates a [`DataFrame`] that will execute a SQL query.
     pub fn sql(&mut self, sql: &str) -> Result<Arc<dyn DataFrame>> {
         let plan = self.create_logical_plan(sql)?;
         match plan {
@@ -188,7 +191,7 @@ impl ExecutionContext {
             .insert(variable_type, provider);
     }
 
-    /// Registers a scalar UDF within this context.
+    /// Registers a scalar UDF (user-defined function) within this context.
     pub fn register_udf(&mut self, f: ScalarUDF) {
         self.state
             .lock()
@@ -197,7 +200,7 @@ impl ExecutionContext {
             .insert(f.name.clone(), Arc::new(f));
     }
 
-    /// Registers an aggregate UDF within this context.
+    /// Registers an aggregate UDF (user-defined function) within this context.
     pub fn register_udaf(&mut self, f: AggregateUDF) {
         self.state
             .lock()
@@ -206,7 +209,7 @@ impl ExecutionContext {
             .insert(f.name.clone(), Arc::new(f));
     }
 
-    /// Creates a DataFrame for reading a CSV data source.
+    /// Creates a [`DataFrame`] that will read data from a CSV file.
     pub fn read_csv(
         &mut self,
         filename: &str,
@@ -218,7 +221,7 @@ impl ExecutionContext {
         )))
     }
 
-    /// Creates a DataFrame for reading a Parquet data source.
+    /// Creates a [`DataFrame`] that will read data from a Parquet file.
     pub fn read_parquet(&mut self, filename: &str) -> Result<Arc<dyn DataFrame>> {
         Ok(Arc::new(DataFrameImpl::new(
             self.state.clone(),
@@ -231,7 +234,7 @@ impl ExecutionContext {
         )))
     }
 
-    /// Creates a DataFrame for reading a custom TableProvider.
+    /// Creates a [`DataFrame`] that will read data from a custom [`TableProvider`].
     pub fn read_table(
         &mut self,
         provider: Arc<dyn TableProvider + Send + Sync>,
@@ -250,8 +253,8 @@ impl ExecutionContext {
         )))
     }
 
-    /// Registers a CSV data source so that it can be referenced from SQL statements
-    /// executed against this context.
+    /// Registers a CSV file as a data source so that it can be referenced from
+    /// SQL statements executed against this context.
     pub fn register_csv(
         &mut self,
         name: &str,
@@ -262,8 +265,8 @@ impl ExecutionContext {
         Ok(())
     }
 
-    /// Registers a Parquet data source so that it can be referenced from SQL statements
-    /// executed against this context.
+    /// Registers a Parquet file as a data source so that it can be referenced
+    /// from SQL statements executed against this context.
     pub fn register_parquet(&mut self, name: &str, filename: &str) -> Result<()> {
         let table = ParquetTable::try_new(
             &filename,
@@ -273,8 +276,8 @@ impl ExecutionContext {
         Ok(())
     }
 
-    /// Registers a table using a custom TableProvider so that it can be referenced from SQL
-    /// statements executed against this context.
+    /// Registers a table using a custom [`TableProvider`] so that it can be
+    /// referenced from SQL statements executed against this context.
     pub fn register_table(
         &mut self,
         name: &str,
@@ -287,10 +290,12 @@ impl ExecutionContext {
             .insert(name.to_string(), provider.into());
     }
 
-    /// Retrieves a DataFrame representing a table previously registered by calling the
-    /// register_table function.
+    /// Retrieves a [`DataFrame`] representing a table previously registered by calling the
+    /// [`register_table`] function.
     ///
     /// Returns an error if no table has been registered with the provided name.
+    ///
+    /// [`register_table`]: ExecutionContext::register_table
     pub fn table(&self, table_name: &str) -> Result<Arc<dyn DataFrame>> {
         match self.state.lock().unwrap().datasources.get(table_name) {
             Some(provider) => {
@@ -455,9 +460,9 @@ impl FunctionRegistry for ExecutionContext {
     }
 }
 
-/// A planner used to add extensions to DataFusion logical and physical plans.
+/// A planner used to add extensions to logical and physical plans.
 pub trait QueryPlanner {
-    /// Given a `LogicalPlan`, create an `ExecutionPlan` suitable for execution
+    /// Given a [`LogicalPlan`], creates an [`ExecutionPlan`] suitable for execution.
     fn create_physical_plan(
         &self,
         logical_plan: &LogicalPlan,
@@ -465,11 +470,10 @@ pub trait QueryPlanner {
     ) -> Result<Arc<dyn ExecutionPlan>>;
 }
 
-/// The query planner used if no user defined planner is provided
-struct DefaultQueryPlanner {}
+/// The query planner used if no user-defined planner is provided.
+struct DefaultQueryPlanner;
 
 impl QueryPlanner for DefaultQueryPlanner {
-    /// Given a `LogicalPlan`, create an `ExecutionPlan` suitable for execution
     fn create_physical_plan(
         &self,
         logical_plan: &LogicalPlan,
@@ -480,7 +484,7 @@ impl QueryPlanner for DefaultQueryPlanner {
     }
 }
 
-/// Configuration options for execution context
+/// Configuration options for an [`ExecutionContext`].
 #[derive(Clone)]
 pub struct ExecutionConfig {
     /// Number of concurrent threads for query execution.
@@ -493,9 +497,8 @@ pub struct ExecutionConfig {
     query_planner: Arc<dyn QueryPlanner + Send + Sync>,
 }
 
-impl ExecutionConfig {
-    /// Create an execution config with default setting
-    pub fn new() -> Self {
+impl Default for ExecutionConfig {
+    fn default() -> Self {
         Self {
             concurrency: num_cpus::get(),
             batch_size: 32768,
@@ -507,8 +510,15 @@ impl ExecutionConfig {
             query_planner: Arc::new(DefaultQueryPlanner {}),
         }
     }
+}
 
-    /// Customize max_concurrency
+impl ExecutionConfig {
+    /// Returns an `ExecutionConfig` with default settings.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets the number of concurrent threads for query execution.
     pub fn with_concurrency(mut self, n: usize) -> Self {
         // concurrency must be greater than zero
         assert!(n > 0);
@@ -516,7 +526,7 @@ impl ExecutionConfig {
         self
     }
 
-    /// Customize batch size
+    /// Sets the batch size.
     pub fn with_batch_size(mut self, n: usize) -> Self {
         // batch size must be greater than zero
         assert!(n > 0);
@@ -524,7 +534,7 @@ impl ExecutionConfig {
         self
     }
 
-    /// Replace the default query planner
+    /// Replaces the default query planner.
     pub fn with_query_planner(
         mut self,
         query_planner: Arc<dyn QueryPlanner + Send + Sync>,
@@ -533,7 +543,7 @@ impl ExecutionConfig {
         self
     }
 
-    /// Adds a new [`OptimizerRule`]
+    /// Adds a new [`OptimizerRule`].
     pub fn add_optimizer_rule(
         mut self,
         optimizer_rule: Arc<dyn OptimizerRule + Send + Sync>,
@@ -543,18 +553,18 @@ impl ExecutionConfig {
     }
 }
 
-/// Execution context for registering data sources and executing queries
-#[derive(Clone)]
+/// The internal state of an execution context.
+#[derive(Clone, Default)]
 pub struct ExecutionContextState {
-    /// Data sources that are registered with the context
+    /// Data sources registered with the context.
     pub datasources: HashMap<String, Arc<dyn TableProvider + Send + Sync>>,
-    /// Scalar functions that are registered with the context
+    /// Scalar functions registered with the context.
     pub scalar_functions: HashMap<String, Arc<ScalarUDF>>,
-    /// Variable provider that are registered with the context
+    /// Variable providers registered with the context.
     pub var_provider: HashMap<VarType, Arc<dyn VarProvider + Send + Sync>>,
-    /// Aggregate functions registered in the context
+    /// Aggregate functions registered with the context.
     pub aggregate_functions: HashMap<String, Arc<AggregateUDF>>,
-    /// Context configuration
+    /// Context configuration.
     pub config: ExecutionConfig,
 }
 
@@ -605,7 +615,6 @@ impl FunctionRegistry for ExecutionContextState {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use crate::physical_plan::functions::ScalarFunctionImplementation;
     use crate::physical_plan::{collect, collect_partitioned};
