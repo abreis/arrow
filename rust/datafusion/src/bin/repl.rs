@@ -15,8 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#![allow(bare_trait_objects)]
-
 use arrow::util::pretty;
 use clap::{crate_version, App, Arg};
 use datafusion::error::Result;
