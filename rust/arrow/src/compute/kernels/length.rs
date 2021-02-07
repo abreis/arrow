@@ -24,7 +24,7 @@ use crate::{
 };
 use std::sync::Arc;
 
-fn length_string<OffsetSize>(array: &Array, data_type: DataType) -> Result<ArrayRef>
+fn length_string<OffsetSize>(array: &dyn Array, data_type: DataType) -> Result<ArrayRef>
 where
     OffsetSize: OffsetSizeTrait,
 {
@@ -67,7 +67,7 @@ where
 /// * this only accepts StringArray/Utf8 and LargeString/LargeUtf8
 /// * length of null is null.
 /// * length is in number of bytes
-pub fn length(array: &Array) -> Result<ArrayRef> {
+pub fn length(array: &dyn Array) -> Result<ArrayRef> {
     match array.data_type() {
         DataType::Utf8 => length_string::<i32>(array, DataType::Int32),
         DataType::LargeUtf8 => length_string::<i64>(array, DataType::Int64),

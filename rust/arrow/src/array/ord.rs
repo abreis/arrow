@@ -40,8 +40,8 @@ fn cmp_nans_last<T: Float>(a: &T, b: &T) -> Ordering {
 }
 
 fn compare_primitives<'a, T: ArrowPrimitiveType>(
-    left: &'a Array,
-    right: &'a Array,
+    left: &'a dyn Array,
+    right: &'a dyn Array,
 ) -> DynComparator<'a>
 where
     T::Native: Ord,
@@ -51,15 +51,15 @@ where
     Box::new(move |i, j| left.value(i).cmp(&right.value(j)))
 }
 
-fn compare_boolean<'a>(left: &'a Array, right: &'a Array) -> DynComparator<'a> {
+fn compare_boolean<'a>(left: &'a dyn Array, right: &'a dyn Array) -> DynComparator<'a> {
     let left = left.as_any().downcast_ref::<BooleanArray>().unwrap();
     let right = right.as_any().downcast_ref::<BooleanArray>().unwrap();
     Box::new(move |i, j| left.value(i).cmp(&right.value(j)))
 }
 
 fn compare_float<'a, T: ArrowPrimitiveType>(
-    left: &'a Array,
-    right: &'a Array,
+    left: &'a dyn Array,
+    right: &'a dyn Array,
 ) -> DynComparator<'a>
 where
     T::Native: Float,
@@ -69,7 +69,7 @@ where
     Box::new(move |i, j| cmp_nans_last(&left.value(i), &right.value(j)))
 }
 
-fn compare_string<'a, T>(left: &'a Array, right: &'a Array) -> DynComparator<'a>
+fn compare_string<'a, T>(left: &'a dyn Array, right: &'a dyn Array) -> DynComparator<'a>
 where
     T: StringOffsetSizeTrait,
 {
@@ -84,7 +84,10 @@ where
     Box::new(move |i, j| left.value(i).cmp(&right.value(j)))
 }
 
-fn compare_dict_string<'a, T>(left: &'a Array, right: &'a Array) -> DynComparator<'a>
+fn compare_dict_string<'a, T>(
+    left: &'a dyn Array,
+    right: &'a dyn Array,
+) -> DynComparator<'a>
 where
     T: ArrowDictionaryKeyType,
 {
@@ -125,7 +128,10 @@ where
 /// ```
 // This is a factory of comparisons.
 // The lifetime 'a enforces that we cannot use the closure beyond any of the array's lifetime.
-pub fn build_compare<'a>(left: &'a Array, right: &'a Array) -> Result<DynComparator<'a>> {
+pub fn build_compare<'a>(
+    left: &'a dyn Array,
+    right: &'a dyn Array,
+) -> Result<DynComparator<'a>> {
     use DataType::*;
     use IntervalUnit::*;
     use TimeUnit::*;

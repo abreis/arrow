@@ -264,7 +264,7 @@ impl<OffsetSize: StringOffsetSizeTrait> fmt::Debug for GenericStringArray<Offset
 }
 
 impl<OffsetSize: StringOffsetSizeTrait> Array for GenericStringArray<OffsetSize> {
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 

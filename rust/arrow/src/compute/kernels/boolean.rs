@@ -171,7 +171,7 @@ pub fn not(left: &BooleanArray) -> Result<BooleanArray> {
 /// # Ok(())
 /// # }
 /// ```
-pub fn is_null(input: &Array) -> Result<BooleanArray> {
+pub fn is_null(input: &dyn Array) -> Result<BooleanArray> {
     let len = input.len();
 
     let output = match input.data_ref().null_buffer() {
@@ -203,7 +203,7 @@ pub fn is_null(input: &Array) -> Result<BooleanArray> {
 /// # Ok(())
 /// # }
 /// ```
-pub fn is_not_null(input: &Array) -> Result<BooleanArray> {
+pub fn is_not_null(input: &dyn Array) -> Result<BooleanArray> {
     let len = input.len();
 
     let output = match input.data_ref().null_buffer() {

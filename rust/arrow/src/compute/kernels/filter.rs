@@ -23,7 +23,7 @@ use crate::{array::*, util::bit_chunk_iterator::BitChunkIterator};
 use std::{iter::Enumerate, sync::Arc};
 
 /// Function that can filter arbitrary arrays
-pub type Filter<'a> = Box<Fn(&ArrayData) -> ArrayData + 'a>;
+pub type Filter<'a> = Box<dyn Fn(&ArrayData) -> ArrayData + 'a>;
 
 /// Internal state of [SlicesIterator]
 #[derive(Debug, PartialEq)]
@@ -220,7 +220,7 @@ pub fn build_filter(filter: &BooleanArray) -> Result<Filter> {
 /// # Ok(())
 /// # }
 /// ```
-pub fn filter(array: &Array, filter: &BooleanArray) -> Result<ArrayRef> {
+pub fn filter(array: &dyn Array, filter: &BooleanArray) -> Result<ArrayRef> {
     let iter = SlicesIterator::new(filter);
 
     let mut mutable =

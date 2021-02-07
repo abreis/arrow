@@ -398,17 +398,17 @@ pub trait ArrayBuilder: Any {
     /// This is most useful when one wants to call non-mutable APIs on a specific builder
     /// type. In this case, one can first cast this into a `Any`, and then use
     /// `downcast_ref` to get a reference on the specific builder.
-    fn as_any(&self) -> &Any;
+    fn as_any(&self) -> &dyn Any;
 
     /// Returns the builder as a mutable `Any` reference.
     ///
     /// This is most useful when one wants to call mutable APIs on a specific builder
     /// type. In this case, one can first cast this into a `Any`, and then use
     /// `downcast_mut` to get a reference on the specific builder.
-    fn as_any_mut(&mut self) -> &mut Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any>;
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any>;
 }
 
 ///  Array builder for fixed-width primitive types
@@ -492,17 +492,17 @@ impl BooleanBuilder {
 
 impl ArrayBuilder for BooleanBuilder {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -531,17 +531,17 @@ pub struct PrimitiveBuilder<T: ArrowPrimitiveType> {
 
 impl<T: ArrowPrimitiveType> ArrayBuilder for PrimitiveBuilder<T> {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -693,17 +693,17 @@ where
     T: 'static,
 {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -820,17 +820,17 @@ where
     T: 'static,
 {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -942,17 +942,17 @@ impl<OffsetSize: BinaryOffsetSizeTrait> ArrayBuilder
     for GenericBinaryBuilder<OffsetSize>
 {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -976,17 +976,17 @@ impl<OffsetSize: StringOffsetSizeTrait> ArrayBuilder
     for GenericStringBuilder<OffsetSize>
 {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -1009,17 +1009,17 @@ impl<OffsetSize: StringOffsetSizeTrait> ArrayBuilder
 
 impl ArrayBuilder for FixedSizeBinaryBuilder {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -1041,17 +1041,17 @@ impl ArrayBuilder for FixedSizeBinaryBuilder {
 
 impl ArrayBuilder for DecimalBuilder {
     /// Returns the builder as a non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as a mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -1266,7 +1266,7 @@ impl DecimalBuilder {
 /// properly called to maintain the consistency of the data structure.
 pub struct StructBuilder {
     fields: Vec<Field>,
-    field_builders: Vec<Box<ArrayBuilder>>,
+    field_builders: Vec<Box<dyn ArrayBuilder>>,
     bitmap_builder: BooleanBufferBuilder,
     len: usize,
 }
@@ -1306,7 +1306,7 @@ impl ArrayBuilder for StructBuilder {
     /// This is most useful when one wants to call non-mutable APIs on a specific builder
     /// type. In this case, one can first cast this into a `Any`, and then use
     /// `downcast_ref` to get a reference on the specific builder.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
@@ -1315,12 +1315,12 @@ impl ArrayBuilder for StructBuilder {
     /// This is most useful when one wants to call mutable APIs on a specific builder
     /// type. In this case, one can first cast this into a `Any`, and then use
     /// `downcast_mut` to get a reference on the specific builder.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 }
@@ -1328,7 +1328,7 @@ impl ArrayBuilder for StructBuilder {
 /// Returns a builder with capacity `capacity` that corresponds to the datatype `DataType`
 /// This function is useful to construct arrays from an arbitrary vectors with known/expected
 /// schema.
-pub fn make_builder(datatype: &DataType, capacity: usize) -> Box<ArrayBuilder> {
+pub fn make_builder(datatype: &DataType, capacity: usize) -> Box<dyn ArrayBuilder> {
     match datatype {
         DataType::Null => unimplemented!(),
         DataType::Boolean => Box::new(BooleanBuilder::new(capacity)),
@@ -1402,7 +1402,7 @@ pub fn make_builder(datatype: &DataType, capacity: usize) -> Box<ArrayBuilder> {
 }
 
 impl StructBuilder {
-    pub fn new(fields: Vec<Field>, field_builders: Vec<Box<ArrayBuilder>>) -> Self {
+    pub fn new(fields: Vec<Field>, field_builders: Vec<Box<dyn ArrayBuilder>>) -> Self {
         Self {
             fields,
             field_builders,
@@ -1772,17 +1772,17 @@ where
     V: ArrowPrimitiveType,
 {
     /// Returns the builder as an non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as an mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -1960,17 +1960,17 @@ where
     K: ArrowDictionaryKeyType,
 {
     /// Returns the builder as an non-mutable `Any` reference.
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
     /// Returns the builder as an mutable `Any` reference.
-    fn as_any_mut(&mut self) -> &mut Any {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
 
     /// Returns the boxed builder as a box of `Any`.
-    fn into_box_any(self: Box<Self>) -> Box<Any> {
+    fn into_box_any(self: Box<Self>) -> Box<dyn Any> {
         self
     }
 
@@ -2798,9 +2798,9 @@ mod tests {
         let mut fields = Vec::new();
         let mut field_builders = Vec::new();
         fields.push(Field::new("f1", DataType::Utf8, false));
-        field_builders.push(Box::new(string_builder) as Box<ArrayBuilder>);
+        field_builders.push(Box::new(string_builder) as Box<dyn ArrayBuilder>);
         fields.push(Field::new("f2", DataType::Int32, false));
-        field_builders.push(Box::new(int_builder) as Box<ArrayBuilder>);
+        field_builders.push(Box::new(int_builder) as Box<dyn ArrayBuilder>);
 
         let mut builder = StructBuilder::new(fields, field_builders);
         assert_eq!(2, builder.num_fields());
@@ -2881,9 +2881,9 @@ mod tests {
         let mut fields = Vec::new();
         let mut field_builders = Vec::new();
         fields.push(Field::new("f1", DataType::Int32, false));
-        field_builders.push(Box::new(int_builder) as Box<ArrayBuilder>);
+        field_builders.push(Box::new(int_builder) as Box<dyn ArrayBuilder>);
         fields.push(Field::new("f2", DataType::Boolean, false));
-        field_builders.push(Box::new(bool_builder) as Box<ArrayBuilder>);
+        field_builders.push(Box::new(bool_builder) as Box<dyn ArrayBuilder>);
 
         let mut builder = StructBuilder::new(fields, field_builders);
         builder
@@ -2974,7 +2974,7 @@ mod tests {
         let mut fields = Vec::new();
         let mut field_builders = Vec::new();
         fields.push(Field::new("f1", DataType::Int32, false));
-        field_builders.push(Box::new(int_builder) as Box<ArrayBuilder>);
+        field_builders.push(Box::new(int_builder) as Box<dyn ArrayBuilder>);
 
         let mut builder = StructBuilder::new(fields, field_builders);
         assert!(builder.field_builder::<BinaryBuilder>(0).is_none());

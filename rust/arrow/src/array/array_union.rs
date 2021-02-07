@@ -271,7 +271,7 @@ impl From<ArrayDataRef> for UnionArray {
 }
 
 impl Array for UnionArray {
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
@@ -562,7 +562,7 @@ mod tests {
         let type_id_buffer = Buffer::from_slice_ref(&type_ids);
         let value_offsets_buffer = Buffer::from_slice_ref(&value_offsets);
 
-        let mut children: Vec<(Field, Arc<Array>)> = Vec::new();
+        let mut children: Vec<(Field, Arc<dyn Array>)> = Vec::new();
         children.push((
             Field::new("A", DataType::Utf8, false),
             Arc::new(string_array),

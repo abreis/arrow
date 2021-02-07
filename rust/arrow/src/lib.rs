@@ -129,7 +129,6 @@
 #![cfg_attr(feature = "avx512", feature(avx512_target_feature))]
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
-#![allow(bare_trait_objects)]
 #![warn(missing_debug_implementations)]
 #![deny(clippy::redundant_clone)]
 // introduced to ignore lint errors when upgrading from 2020-04-22 to 2020-11-14

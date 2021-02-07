@@ -158,7 +158,7 @@ impl<OffsetSize: OffsetSizeTrait> From<ArrayDataRef> for GenericListArray<Offset
 }
 
 impl<OffsetSize: 'static + OffsetSizeTrait> Array for GenericListArray<OffsetSize> {
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 
@@ -286,7 +286,7 @@ impl From<ArrayDataRef> for FixedSizeListArray {
 }
 
 impl Array for FixedSizeListArray {
-    fn as_any(&self) -> &Any {
+    fn as_any(&self) -> &dyn Any {
         self
     }
 

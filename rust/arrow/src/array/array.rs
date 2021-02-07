@@ -54,7 +54,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
     /// # Ok(())
     /// # }
     /// ```
-    fn as_any(&self) -> &Any;
+    fn as_any(&self) -> &dyn Any;
 
     /// Returns a reference-counted pointer to the underlying data of this array.
     fn data(&self) -> ArrayDataRef;
@@ -212,7 +212,7 @@ pub trait Array: fmt::Debug + Send + Sync + JsonEqual {
 }
 
 /// A reference-counted reference to a generic `Array`.
-pub type ArrayRef = Arc<Array>;
+pub type ArrayRef = Arc<dyn Array>;
 
 /// Constructs an array using the input `data`.
 /// Returns a reference-counted `Array` instance.
