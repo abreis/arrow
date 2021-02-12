@@ -15,23 +15,34 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//! Computation kernels on Arrow Arrays
+//! WRITEME
 
-pub mod kernels;
+use crate::{array::PrimitiveArray, datatypes::ArrowPrimitiveType};
 
-mod datum;
-mod util;
+/// WRITEME
+#[derive(Debug)]
+pub enum Datum<'d, T>
+where
+    T: ArrowPrimitiveType,
+{
+    Array(&'d PrimitiveArray<T>),
+    Scalar(Option<T::Native>),
+}
 
-pub use self::datum::*;
-pub use self::kernels::aggregate::*;
-pub use self::kernels::arithmetic::*;
-pub use self::kernels::boolean::*;
-pub use self::kernels::cast::*;
-pub use self::kernels::comparison::*;
-pub use self::kernels::concat::*;
-pub use self::kernels::filter::*;
-pub use self::kernels::limit::*;
-pub use self::kernels::sort::*;
-pub use self::kernels::take::*;
-pub use self::kernels::temporal::*;
-pub use self::kernels::window::*;
+impl<'d, T> From<&'d PrimitiveArray<T>> for Datum<'d, T>
+where
+    T: ArrowPrimitiveType,
+{
+    fn from(array: &'d PrimitiveArray<T>) -> Self {
+        Datum::Array(array)
+    }
+}
+
+impl<'d, T> From<Option<T::Native>> for Datum<'d, T>
+where
+    T: ArrowPrimitiveType,
+{
+    fn from(scalar: Option<T::Native>) -> Self {
+        Datum::Scalar(scalar)
+    }
+}
