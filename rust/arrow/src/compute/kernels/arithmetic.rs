@@ -30,6 +30,7 @@ use num::{One, Zero};
 use crate::buffer::Buffer;
 #[cfg(simd)]
 use crate::buffer::MutableBuffer;
+use crate::compute::Datum;
 use crate::compute::{kernels::arity::unary, util::combine_option_bitmap};
 use crate::datatypes;
 use crate::datatypes::ArrowNumericType;
@@ -777,23 +778,39 @@ where
 /// Perform `left / right` operation on two arrays. If either left or right value is null
 /// then the result is also null. If any right hand value is zero then the result of this
 /// operation will be `Err(ArrowError::DivideByZero)`.
-pub fn divide<T>(
-    left: &PrimitiveArray<T>,
-    right: &PrimitiveArray<T>,
-) -> Result<PrimitiveArray<T>>
+pub fn divide<'dl, 'dr, T, DL, DR>(left: DL, right: DR) -> Result<PrimitiveArray<T>>
 where
-    T: datatypes::ArrowNumericType,
-    T::Native: Add<Output = T::Native>
-        + Sub<Output = T::Native>
-        + Mul<Output = T::Native>
-        + Div<Output = T::Native>
-        + Zero
-        + One,
+    T: ArrowNumericType,
+    T::Native: Div<Output = T::Native> + One + Zero,
+    DL: Into<Datum<'dl, T>>,
+    DR: Into<Datum<'dr, T>>,
 {
-    #[cfg(simd)]
-    return simd_divide(&left, &right);
-    #[cfg(not(simd))]
-    return math_divide(&left, &right);
+    use Datum::*;
+
+    match (left.into(), right.into()) {
+        //
+        // Array dividend, scalar divisor.
+        // Optimizes checking for divide-by-zero.
+        // TODO: forward handling of Option<T:Native> to inner methods
+        (Array(array), Scalar(Some(divisor))) => {
+            #[cfg(simd)]
+            return simd_divide_scalar(&array, divisor);
+            #[cfg(not(simd))]
+            return math_divide_scalar(&array, divisor);
+        }
+
+        //
+        // Array or scalar dividend, array divisor.
+        // TODO: forward handling of `left: Datum<_>` to inner methods
+        (Array(left), Array(right)) => {
+            #[cfg(simd)]
+            return simd_divide(&left, &right);
+            #[cfg(not(simd))]
+            return math_divide(&left, &right);
+        }
+
+        _ => todo!("removeme"),
+    }
 }
 
 #[cfg(test)]
@@ -892,7 +909,7 @@ mod tests {
         let a = a.as_any().downcast_ref::<Int32Array>().unwrap();
         let b = b.as_any().downcast_ref::<Int32Array>().unwrap();
 
-        let c = divide(&a, &b).unwrap();
+        let c = divide(a, b).unwrap();
         assert_eq!(5, c.len());
         assert_eq!(3, c.value(0));
         assert_eq!(2, c.value(1));
@@ -957,7 +974,7 @@ mod tests {
         let b = b.slice(8, 6);
         let b = b.as_any().downcast_ref::<Int32Array>().unwrap();
 
-        let c = divide(&a, &b).unwrap();
+        let c = divide(a, b).unwrap();
         assert_eq!(6, c.len());
         assert_eq!(3, c.value(0));
         assert_eq!(true, c.is_null(1));

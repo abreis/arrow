@@ -148,7 +148,7 @@ macro_rules! compute_op {
             .as_any()
             .downcast_ref::<$DT>()
             .expect("compute_op failed to downcast array");
-        Ok(Arc::new($OP(&ll, &rr)?))
+        Ok(Arc::new($OP(ll, rr)?))
     }};
     // invoke unary operator
     ($OPERAND:expr, $OP:ident, $DT:ident) => {{
